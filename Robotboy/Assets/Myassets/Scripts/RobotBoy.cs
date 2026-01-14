@@ -19,11 +19,17 @@ public class RobotBoy : MonoBehaviour
     void Update()
     {
         float h = Input.GetAxis("Horizontal");
-        float speed = Input.GetKey(KeyCode.LeftShift) ? runSpeed : walkSpeed;
+
+        bool runKey = Input.GetKey(KeyCode.LeftShift);
+        bool runJoystick = Input.GetKey(KeyCode.JoystickButton8);
+
+        bool isRunning = runKey || runJoystick;
+        float speed = isRunning ? runSpeed : walkSpeed;
 
         transform.Translate(Vector2.right * h * speed * Time.deltaTime);
 
-        if (h != 0) transform.localScale = new Vector3(Mathf.Sign(h), 1, 1);
+        if (h != 0)
+            transform.localScale = new Vector3(Mathf.Sign(h), 1, 1);
 
         if (Input.GetButtonDown("Jump") && isGrounded)
         {
@@ -32,17 +38,19 @@ public class RobotBoy : MonoBehaviour
             isGrounded = false;
         }
 
-        anim.SetFloat("Speed", isGrounded ? (h != 0 ? (Input.GetKey(KeyCode.LeftShift) ? 2f : 1f) : 0f) : 0f);
+        bool isMoving = h != 0 && isGrounded;
+
+        anim.SetBool("Idle", !isMoving);
+        anim.SetBool("SpeedWalk", isMoving && !isRunning);
+        anim.SetBool("SpeedRun", isMoving && isRunning);
     }
 
     void OnCollisionEnter2D(Collision2D col)
     {
-        isGrounded = true;
-        anim.SetBool("IsJumping", false);
-    }
-
-    void OnCollisionExit2D(Collision2D col)
-    {
-        isGrounded = false;
+        if (col.gameObject.CompareTag("Ground"))
+        {
+            isGrounded = true;
+            anim.SetBool("IsJumping", false);
+        }
     }
 }
